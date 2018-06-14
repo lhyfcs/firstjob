@@ -1,0 +1,29 @@
+.introduction {
+  text-align:center;
+  width:70%;
+  margin:0 auto;
+  border:1px black solid;
+  border-radius:20px;
+  height:100px;
+}
+
+.layout-logo{
+  width: 120px;
+  height: 40px;
+  border-radius: 3px;
+  position: relative;
+  color: white;
+  margin-left: auto; 
+  margin-right: auto;
+}
+.container {
+  width:1200px;
+  margin:0 auto;
+}
+.statistic {
+  display:flex;
+}
+.item {
+  width:100px;
+}
+

@@ -1,25 +1,127 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>iview example</title>
+    <title>星云投标</title>
     <link rel="stylesheet" type="text/css" href="http://unpkg.com/iview/dist/styles/iview.css">
     <script type="text/javascript" src="http://vuejs.org/js/vue.min.js"></script>
+    <script type="text/javascript" src="lib/nebPay.js"></script> 
     <script type="text/javascript" src="http://unpkg.com/iview/dist/iview.min.js"></script>
+    <link rel="stylesheet" href="css/style.css"> 
 </head>
 <body>
-<div id="app">
-    <i-button @click="show">Click me!</i-button>
+<div class="container" id="app">
+    <i-header>
+        <div class="layout-logo"><h1>星云投标系统</h1>
+        </div>
+    </i-header>
+    <Card shadow>
+        <div slot="title">{{auctionText}}</div>
+    </Card>
+    <div>
+        <template>
+            <Input v-model="acutionContext" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入你想说的话..."></Input>
+        </template>
+    </div>
+    <div>
+    <template>
+        <InputNumber style="height:20px" :max="3000" :min="0.001" :step="0.001" v-model="acutionValue"></InputNumber>
+    </template>
+</div>
+    <i-button @click="acution">投标</i-button>
     <Modal v-model="visible" title="Welcome">Welcome to iView</Modal>
+
+    <div class="naslist">
+        <i-Table :columns="columns" :data="members"></i-Table>
+    </div>
+    <Modal
+        v-model="webExtensionWalletShow"
+        title="您未安装星云DApp!"
+        :mask-closable="false"
+        :closable="false">
+        <p>请先安装<a target="_blank" href="https://github.com/ChengOrangeJu/WebExtensionWallet">WebExtensionWallet</a></p>
+        <p slot="footer"><a @click="reload">刷新</a></p>
+    </Modal>
 </div>
 <script>
+    var NebPay = require("nebpay");
+    var nebPay = new NebPay();
     new Vue({
         el: '#app',
         data: {
-            visible: false
+            visible: false,
+            highest:{
+                value: 0,
+                context: '',
+                userId: 0,
+                dappAdd: "",
+            },
+            auctionText: "还没人中标哦！！！",
+            masterAddress: "",
+            columns: [
+                    {
+                        title: '支付地址',
+                        key: 'from'
+                    },
+                    {
+                        title: '日期',
+                        key: 'payDay'
+                    },
+                    {
+                        title: '留言',
+                        key: 'context',
+                    },
+                    {
+                        title: '支付金额',
+                        key: 'payMuch',
+                    }
+                ],
+            members: [],
+            acutionContext: '',
+            acutionValue: 0.001,
+            webExtensionWalletShow: false,
+        },
+        mounted: function(){
+            if(this.walletCheck()){
+                this.initialize();
+            }
         },
         methods: {
-            show: function () {
-                this.visible = true;
+            walletCheck:function(){
+                if (typeof(webExtensionWallet) === "undefined") {
+                    this.webExtensionWalletShow = true
+                    return false;
+                }
+                return true;
+            },
+            acution:function(){
+                if (typeof(webExtensionWallet) === "undefined") {
+                    this.webExtensionWalletShow = true
+                    return
+                }
+                var to = this.dappAddress;
+                var value = this.acutionValue;
+                var context = this.acutionContext;
+                var callFunction = "tender";
+                var callArgs = [this.acutionContext];
+                nebPay.call(to, value, callFunction, JSON.stringify(callArgs), {    //使用nebpay的call接口去调用合约,
+                    listener: this.submitCb
+                });
+            },
+            reload:function(){
+                window.location.reload()
+            },
+            submitCb:function(resp){
+                var self = this;
+                this.$Modal.success({
+                    title: '提交成功',
+                    content: '需要进行区块确认，这可能会花费几十秒钟的时间。</br>你可以在<a href="https://wallet.nasscan.io/check.html" target="_blank">https://wallet.nasscan.io/check.html</a>中</br>使用<code>'+resp.txhash+'</code>查询进度！',
+                    width: 600,
+                    onOk:self.initialize,
+                })
+            },
+            initialize: function(){
+                var to = this.dappAddress;
+                var value = "0";
             }
         }
     })

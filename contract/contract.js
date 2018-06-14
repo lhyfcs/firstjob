@@ -70,6 +70,7 @@ AuctionCollection.prototype = {
         acution.id = this._nextId();
         acution.from = from;
         acution.pay = value;
+        acution.context = opt;
         acution.status = 1;
         // reset other member status
         this.fundpool = value.plus(this.fundpool);

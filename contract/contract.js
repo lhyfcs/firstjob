@@ -48,8 +48,8 @@ AuctionCollection.prototype = {
         this.start = this.getDay();
         this.auctiondays = 2; // change by author
         this.counter = 0; // id counter
-        this.master = "";
         this.baseDay = 1000;
+        this.master = "n1a1sF7KS9q9YdjmemdRJz8RYzW2txByNgy";
     },
 
     tender: function(opt){
@@ -81,7 +81,12 @@ AuctionCollection.prototype = {
             pre.status = 0;
             this.collection.put(acution.id - 1, pre);
         }
+        console.log('new auction:' + JSON.stringify(acution));
         return "success";
+    },
+
+    getHighest: function() {
+        return this.highest;
     },
     refund: function(){
         var standard = new BigNumber(1000000000000000);
@@ -89,7 +94,7 @@ AuctionCollection.prototype = {
             return "没有投标";
         }
         var backList = [];
-        for(var i = 0; i < this.counter; i++){
+        for(var i = 1; i < this.counter; i++){
             var item = this.collection.get(i);
             var res = Blockchain.transfer(item.from, item.pay);
             if(!res){ 
@@ -135,6 +140,7 @@ AuctionCollection.prototype = {
     getDay: function() {
         var ts = Blockchain.transaction.timestamp;
         var day = parseInt(ts/86400) - this.baseDay;
+        console.log('get data time stamp' + ts);
         return day;
     },
     _nextId: function(){

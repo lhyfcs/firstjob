@@ -18,7 +18,7 @@
         <div slot="title">{{auctionText}}</div>
     </Card>
     <div class="phase">
-        <p><h4>第{{phase}}期投标</h4></p>
+        <p><h4>第{{phase}}期投标, 当前最高金额{{highest}}</h4></p>
     </div>
     <div class="controls">
         <input-number  :max="3000" :min="0.001" :step="0.001" v-model="acutionValue"></input-number>
@@ -47,14 +47,9 @@
         el: '#app',
         data: {
             visible: false,
-            highest:{
-                value: 0,
-                context: '',
-                userId: 0,
-                dappAdd: "",
-            },
+            highest: 0,
             auctionText: "还没人中标哦！！！",
-            masterAddress: "",
+            masterAddress: "n1a1sF7KS9q9YdjmemdRJz8RYzW2txByNgy",
             columns: [
                     {
                         title: '支付地址',
@@ -93,7 +88,7 @@
                     this.webExtensionWalletShow = false
                     return
                 }
-                var to = this.dappAddress;
+                var to = this.masterAddress;
                 var value = this.acutionValue;
                 var context = this.acutionContext;
                 var callFunction = "tender";
@@ -115,7 +110,7 @@
                 })
             },
             refreshData: function(){
-                var to = this.dappAddress;
+                var to = this.masterAddress;
                 var value = "0";
                 var callFunction = "getDay";
                 var callArgs = JSON.stringify([""]);
@@ -140,11 +135,11 @@
                     }
                 });
 
-                callFunction="recordLength"
+                callFunction="getHighest"
                 nebPay.simulateCall(to, value, callFunction, callArgs, {   
                     listener: function(resp){ // inittable
                         var result = resp.result;
-                        _this.counter = result;
+                        _this.highest = result;
                     }   
                 });
             }

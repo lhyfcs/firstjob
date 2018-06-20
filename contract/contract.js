@@ -49,6 +49,7 @@ AuctionCollection.prototype = {
         this.auctiondays = 2; // change by author
         this.counter = 0; // id counter
         this.master = "";
+        this.baseDay = 1000;
     },
 
     tender: function(opt){
@@ -133,7 +134,7 @@ AuctionCollection.prototype = {
     },
     getDay: function() {
         var ts = Blockchain.transaction.timestamp;
-        var day = parseInt(ts/86400);
+        var day = parseInt(ts/86400) - this.baseDay;
         return day;
     },
     _nextId: function(){
@@ -143,7 +144,7 @@ AuctionCollection.prototype = {
         var list = [];
         for(var i = 0; i < this.counter; i++){
             var item = this.collection.get(i);
-            list.push(item);
+            list.push({from: item.from, context: item.context, payNas: item.pay});
         }
         return list;
     },

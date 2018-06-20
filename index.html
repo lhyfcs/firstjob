@@ -17,22 +17,20 @@
     <Card shadow>
         <div slot="title">{{auctionText}}</div>
     </Card>
-    <div>
-        <template>
-            <Input v-model="acutionContext" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入你想说的话..."></Input>
-        </template>
+    <div class="phase">
+        <p><h4>第{{phase}}期投标</h4></p>
     </div>
-    <div>
-    <template>
-        <InputNumber style="height:20px" :max="3000" :min="0.001" :step="0.001" v-model="acutionValue"></InputNumber>
-    </template>
-</div>
-    <i-button @click="acution">投标</i-button>
+    <div class="controls">
+        <input-number  :max="3000" :min="0.001" :step="0.001" v-model="acutionValue"></input-number>
+        <i-input v-model="acutionContext" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入你想说的话..."></i-input>
+        <i-button @click="acution">投标</i-button>
+        <div class="naslist">
+            <i-Table :columns="columns" :data="members"></i-Table>
+        </div>
+    </div>
+    
     <Modal v-model="visible" title="Welcome">Welcome to iView</Modal>
-
-    <div class="naslist">
-        <i-Table :columns="columns" :data="members"></i-Table>
-    </div>
+    
     <Modal
         v-model="webExtensionWalletShow"
         title="您未安装星云DApp!"
@@ -63,39 +61,36 @@
                         key: 'from'
                     },
                     {
-                        title: '日期',
-                        key: 'payDay'
-                    },
-                    {
                         title: '留言',
                         key: 'context',
                     },
                     {
                         title: '支付金额',
-                        key: 'payMuch',
+                        key: 'payNas',
                     }
                 ],
             members: [],
+            phase: 1,
             acutionContext: '',
             acutionValue: 0.001,
             webExtensionWalletShow: false,
         },
         mounted: function(){
             if(this.walletCheck()){
-                this.initialize();
+                this.refreshData();
             }
         },
         methods: {
             walletCheck:function(){
                 if (typeof(webExtensionWallet) === "undefined") {
-                    this.webExtensionWalletShow = true
+                    this.webExtensionWalletShow = false
                     return false;
                 }
                 return true;
             },
             acution:function(){
                 if (typeof(webExtensionWallet) === "undefined") {
-                    this.webExtensionWalletShow = true
+                    this.webExtensionWalletShow = false
                     return
                 }
                 var to = this.dappAddress;
@@ -116,12 +111,42 @@
                     title: '提交成功',
                     content: '需要进行区块确认，这可能会花费几十秒钟的时间。</br>你可以在<a href="https://wallet.nasscan.io/check.html" target="_blank">https://wallet.nasscan.io/check.html</a>中</br>使用<code>'+resp.txhash+'</code>查询进度！',
                     width: 600,
-                    onOk:self.initialize,
+                    onOk:self.refreshData,
                 })
             },
-            initialize: function(){
+            refreshData: function(){
                 var to = this.dappAddress;
                 var value = "0";
+                var callFunction = "getDay";
+                var callArgs = JSON.stringify([""]);
+                nebPay.simulateCall(to, value, callFunction, callArgs, {    //使用nebpay的simulateCall接口去执行get查询, 模拟执行.不发送交易,不上链
+                    listener: function(resp){
+                        var result = resp.result;
+                        var resultObj = JSON.parse(result);
+                        var day = resultObj.day
+                        _this.day = day;  // initialize day and hour
+                        _this.hour = resultObj.hour;
+                        var idx = day%[raw_data.length];
+                        _this.quize = raw_data[idx];
+                    }
+                });
+
+                callFunction = "accountList";
+                nebPay.simulateCall(to, value, callFunction, callArgs, {    
+                    listener: function(resp){ 
+                        var result = resp.result;
+                        var resultObj = JSON.parse(result);
+                        _this.members = resultObj;
+                    }
+                });
+
+                callFunction="recordLength"
+                nebPay.simulateCall(to, value, callFunction, callArgs, {   
+                    listener: function(resp){ // inittable
+                        var result = resp.result;
+                        _this.counter = result;
+                    }   
+                });
             }
         }
     })

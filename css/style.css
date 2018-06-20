@@ -20,10 +20,13 @@
   width:1200px;
   margin:0 auto;
 }
+.controls > *{
+  margin: 10px 0px;
+}
 .statistic {
   display:flex;
 }
-.item {
+.phase {
   width:100px;
 }
 

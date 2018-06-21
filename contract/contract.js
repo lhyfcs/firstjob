@@ -30,7 +30,6 @@ var AuctionCollection = function(){
     LocalContractStorage.defineProperty(this, "auctiondays");
     LocalContractStorage.defineProperty(this, "highest");
     LocalContractStorage.defineProperty(this, "counter");
-    LocalContractStorage.defineProperty(this, "master");
     LocalContractStorage.defineMapProperty(this, 'collection', {
         parse: function(text){
             return new Auction(text);
@@ -49,7 +48,6 @@ AuctionCollection.prototype = {
         this.auctiondays = 2; // change by author
         this.counter = 0; // id counter
         this.baseDay = 1000;
-        this.master = "n1a1sF7KS9q9YdjmemdRJz8RYzW2txByNgy";
     },
 
     tender: function(opt){
@@ -102,12 +100,6 @@ AuctionCollection.prototype = {
             }
             backList.push(item.from);
         }
-        // transfer to master
-        item = this.collection.get(this.counter);
-        res = Blockchain.transfer(this.master, item.pay);
-        if(!res){ 
-            throw new Error("转账失败.");
-        }
         this._resetData();        
         return "success";
     },
@@ -139,8 +131,7 @@ AuctionCollection.prototype = {
     },
     getDay: function() {
         var ts = Blockchain.transaction.timestamp;
-        var day = parseInt(ts/86400) - this.baseDay;
-        console.log('get data time stamp' + ts);
+        var day = parseInt(ts/86400);
         return day;
     },
     _nextId: function(){

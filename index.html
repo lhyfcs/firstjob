@@ -49,7 +49,7 @@
             visible: false,
             highest: 0,
             auctionText: "还没人中标哦！！！",
-            masterAddress: "n1a1sF7KS9q9YdjmemdRJz8RYzW2txByNgy",
+            masterAddress: "n1vbEFoMHq5vdF1DyPNVZPThbVXEdGfEQWy", // test net
             columns: [
                     {
                         title: '支付地址',
@@ -114,15 +114,11 @@
                 var value = "0";
                 var callFunction = "getDay";
                 var callArgs = JSON.stringify([""]);
+                var self = this;
                 nebPay.simulateCall(to, value, callFunction, callArgs, {    //使用nebpay的simulateCall接口去执行get查询, 模拟执行.不发送交易,不上链
                     listener: function(resp){
                         var result = resp.result;
-                        var resultObj = JSON.parse(result);
-                        var day = resultObj.day
-                        _this.day = day;  // initialize day and hour
-                        _this.hour = resultObj.hour;
-                        var idx = day%[raw_data.length];
-                        _this.quize = raw_data[idx];
+                        self.phase = result - 17702;
                     }
                 });
 
@@ -131,7 +127,7 @@
                     listener: function(resp){ 
                         var result = resp.result;
                         var resultObj = JSON.parse(result);
-                        _this.members = resultObj;
+                        self.members = resultObj;
                     }
                 });
 
@@ -139,7 +135,7 @@
                 nebPay.simulateCall(to, value, callFunction, callArgs, {   
                     listener: function(resp){ // inittable
                         var result = resp.result;
-                        _this.highest = result;
+                        self.highest = result;
                     }   
                 });
             }

@@ -24,6 +24,7 @@
         <input-number  :max="3000" :min="0.001" :step="0.001" v-model="acutionValue"></input-number>
         <i-input v-model="acutionContext" type="textarea" :autosize="{minRows: 2,maxRows: 5}" placeholder="请输入你想说的话..."></i-input>
         <i-button @click="acution">投标</i-button>
+        <i-button @click="refund">返款</i-button>
         <div class="naslist">
             <i-Table :columns="columns" :data="members"></i-Table>
         </div>
@@ -94,20 +95,27 @@
                 var callFunction = "tender";
                 var callArgs = [this.acutionContext];
                 nebPay.call(to, value, callFunction, JSON.stringify(callArgs), {    //使用nebpay的call接口去调用合约,
-                    listener: this.submitCb
+                    listener: this.submitCb('提交成功')
+                });
+            },
+            refund: function(){
+                nebPay.call(this.masterAddress, 0, "refund", JSON.stringify([""]), {    //使用nebpay的call接口去调用合约,
+                    listener: this.submitCb('返款成功')
                 });
             },
             reload:function(){
                 window.location.reload()
             },
-            submitCb:function(resp){
+            submitCb:function(title){
                 var self = this;
-                this.$Modal.success({
-                    title: '提交成功',
-                    content: '需要进行区块确认，这可能会花费几十秒钟的时间。</br>你可以在<a href="https://wallet.nasscan.io/check.html" target="_blank">https://wallet.nasscan.io/check.html</a>中</br>使用<code>'+resp.txhash+'</code>查询进度！',
-                    width: 600,
-                    onOk:self.refreshData,
-                })
+                return function(resp){
+                    this.$Modal.success({
+                        title: title,
+                        content: '需要进行区块确认，这可能会花费几十秒钟的时间。</br>你可以在<a href="https://wallet.nasscan.io/check.html" target="_blank">https://wallet.nasscan.io/check.html</a>中</br>使用<code>'+resp.txhash+'</code>查询进度！',
+                        width: 600,
+                        onOk:self.refreshData,
+                    })
+                }
             },
             refreshData: function(){
                 var to = this.masterAddress;

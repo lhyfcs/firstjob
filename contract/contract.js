@@ -8,13 +8,13 @@ var Auction = function(text) {
         this.from = obj.from;
         this.pay = new BigNumber(obj.pay);
         this.id = obj.id;
-        this.status = obj.status; // status 0, normal, status 1, the highest pay
+        this.context = obj.context;
     } else {
         this.joinTime = "";
         this.from = "";
         this.pay = new BigNumber(0);
         this.id = 0;
-        this.status = 0;
+        this.context = "";
     }
 };
 
@@ -45,13 +45,14 @@ AuctionCollection.prototype = {
         this.fundpool = new BigNumber(0);
         this.highest = new BigNumber(0);
         this.start = this.getDay();
-        this.auctiondays = 2; // change by author
-        this.counter = 0; // id counter
-        this.baseDay = 1000;
+        this.auctiondays = 2; 
+        this.counter = 0; 
+        this.test = "";
+
     },
 
     tender: function(opt){
-        var form = Blockchain.transaction.from;
+        var from = Blockchain.transaction.from;
         var value = new BigNumber(Blockchain.transaction.value);
         var standard = new BigNumber(1000000000000000);
         if(value < standard){
@@ -70,35 +71,27 @@ AuctionCollection.prototype = {
         acution.from = from;
         acution.pay = value;
         acution.context = opt;
-        acution.status = 1;
-        // reset other member status
         this.fundpool = value.plus(this.fundpool);
-        if (acution.id > 1){
-            this.collection.put(acution.idx,acution);
-            var pre = this.collection.get(acution.id - 1);
-            pre.status = 0;
-            this.collection.put(acution.id - 1, pre);
-        }
-        console.log('new auction:' + JSON.stringify(acution));
-        return "success";
+        this.collection.put(acution.id,acution);
+        this.highest = value;
+        return "success:";
     },
 
     getHighest: function() {
-        return this.highest;
+        return this._convertBigNumber(this.highest);
     },
     refund: function(){
         var standard = new BigNumber(1000000000000000);
         if (this.fundpool < standard) {
             return "没有投标";
         }
-        var backList = [];
+        var str ="";
         for(var i = 1; i < this.counter; i++){
             var item = this.collection.get(i);
             var res = Blockchain.transfer(item.from, item.pay);
             if(!res){ 
                 throw new Error("转账失败.");
             }
-            backList.push(item.from);
         }
         this._resetData();        
         return "success";
@@ -109,6 +102,9 @@ AuctionCollection.prototype = {
         this._resetData();
     },
     _resetData: function(){
+        for(var i = 1; i <= this.counter;i++){
+            this.collection.del(i);
+        }
         this.fundpool = new BigNumber(0);
         this.highest = new BigNumber(0);
         this.counter = 0;
@@ -139,16 +135,35 @@ AuctionCollection.prototype = {
     },
     accountList: function(){
         var list = [];
-        for(var i = 0; i < this.counter; i++){
+        for(var i = 1; i <= this.counter; i++){
             var item = this.collection.get(i);
-            list.push({from: item.from, context: item.context, payNas: item.pay});
+            list.push({from: item.from, context: item.context, payNas: this._convertBigNumber(item.pay)});
         }
         return list;
+    },
+    listCollection: function() {
+        var str = "" + this.counter + "---";
+        var items = [];
+        for(var i = 1; i <= this.counter; i++){
+            var item = this.collection.get(i);
+            if (item) str += item.toString();
+        }
+        return str;
+    },
+    collectInfo: function(){
+        return JSON.stringify(this.collection);
     },
     _convertBigNumber:function(_num){
         var num = Number(_num);
         return (num/Number("1000000000000000000")).toFixed(3);
     },
+    checkRefund:function(){
+        var standard = new BigNumber(1000000000000000);
+        if (this.counter<=0 || this.fundpool < standard) return "False";
+        var curDay = this.getDay();
+        var acution = this.collection.get(1);
+        if (curDay - acution.day >= 1) return "True" 
+    }
 };
 
 module.exports = AuctionCollection;

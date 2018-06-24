@@ -50,7 +50,7 @@
             visible: false,
             highest: 0,
             auctionText: "还没人中标哦！！！",
-            masterAddress: "n1vbEFoMHq5vdF1DyPNVZPThbVXEdGfEQWy", // test net
+            masterAddress: "n1fSVE86D57T9RFYZzv8BTHr5r5ZCoZPeBu", // test net
             columns: [
                     {
                         title: '支付地址',
@@ -74,6 +74,7 @@
         mounted: function(){
             if(this.walletCheck()){
                 this.refreshData();
+                setInterval(this.timeCheck, 10 * 1000);
             }
         },
         methods: {
@@ -84,23 +85,34 @@
                 }
                 return true;
             },
+            timeCheck: function(){
+                var to = this.masterAddress;
+                var value = "0";
+                var callFunction = "checkRefund";
+                var callArgs = JSON.stringify([""]);
+                var self = this;
+                nebPay.simulateCall(to, value, callFunction, callArgs, {    
+                    listener: function(resp){ 
+                        var result = resp.result;
+                        if (JSON.parse(result) == "True"){
+                            nebPay.call(to, 0, "refund", callArgs, {    
+                                listener: self.submitCb('返款成功')
+                            });
+                        }
+                    } 
+                });
+            },
             acution:function(){
                 if (typeof(webExtensionWallet) === "undefined") {
                     this.webExtensionWalletShow = false
                     return
                 }
                 var to = this.masterAddress;
-                var value = this.acutionValue;
-                var context = this.acutionContext;
+                var value = this.acutionValue.toString();
                 var callFunction = "tender";
                 var callArgs = [this.acutionContext];
-                nebPay.call(to, value, callFunction, JSON.stringify(callArgs), {    //使用nebpay的call接口去调用合约,
+                nebPay.call(to, value, callFunction, JSON.stringify(callArgs), {    
                     listener: this.submitCb('提交成功')
-                });
-            },
-            refund: function(){
-                nebPay.call(this.masterAddress, 0, "refund", JSON.stringify([""]), {    //使用nebpay的call接口去调用合约,
-                    listener: this.submitCb('返款成功')
                 });
             },
             reload:function(){
@@ -109,7 +121,7 @@
             submitCb:function(title){
                 var self = this;
                 return function(resp){
-                    this.$Modal.success({
+                    self.$Modal.success({
                         title: title,
                         content: '需要进行区块确认，这可能会花费几十秒钟的时间。</br>你可以在<a href="https://wallet.nasscan.io/check.html" target="_blank">https://wallet.nasscan.io/check.html</a>中</br>使用<code>'+resp.txhash+'</code>查询进度！',
                         width: 600,

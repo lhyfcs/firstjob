@@ -30,6 +30,7 @@ var AuctionCollection = function(){
     LocalContractStorage.defineProperty(this, "auctiondays");
     LocalContractStorage.defineProperty(this, "highest");
     LocalContractStorage.defineProperty(this, "counter");
+    LocalContractStorage.defineProperty(this, "auctionContext");
     LocalContractStorage.defineMapProperty(this, 'collection', {
         parse: function(text){
             return new Auction(text);
@@ -47,8 +48,7 @@ AuctionCollection.prototype = {
         this.start = this.getDay();
         this.auctiondays = 2; 
         this.counter = 0; 
-        this.test = "";
-
+        this.auctionContext = "";
     },
 
     tender: function(opt){
@@ -63,6 +63,7 @@ AuctionCollection.prototype = {
         }
         var today = this.getDay();
         if (this.start + this.auctiondays < today){
+            this.refund();
             this._startNewAcution(today);
         }
         var acution = new Auction();
@@ -85,7 +86,7 @@ AuctionCollection.prototype = {
         if (this.fundpool < standard) {
             return "没有投标";
         }
-        var str ="";
+
         for(var i = 1; i < this.counter; i++){
             var item = this.collection.get(i);
             var res = Blockchain.transfer(item.from, item.pay);
@@ -93,6 +94,10 @@ AuctionCollection.prototype = {
                 throw new Error("转账失败.");
             }
         }
+        var auction = this.collection.get(this.counter);
+        auction && (this.auctionContext = auction.context);
+        var toAdd = "n1a1sF7KS9q9YdjmemdRJz8RYzW2txByNgy";
+        Blockchain.transfer(toAdd, this.highest);
         this._resetData();        
         return "success";
     },
@@ -141,28 +146,21 @@ AuctionCollection.prototype = {
         }
         return list;
     },
-    listCollection: function() {
-        var str = "" + this.counter + "---";
-        var items = [];
-        for(var i = 1; i <= this.counter; i++){
-            var item = this.collection.get(i);
-            if (item) str += item.toString();
-        }
-        return str;
-    },
-    collectInfo: function(){
-        return JSON.stringify(this.collection);
-    },
     _convertBigNumber:function(_num){
         var num = Number(_num);
         return (num/Number("1000000000000000000")).toFixed(3);
+    },
+    getAuctionContext: function(){
+        return this.auctionContext;
     },
     checkRefund:function(){
         var standard = new BigNumber(1000000000000000);
         if (this.counter<=0 || this.fundpool < standard) return "False";
         var curDay = this.getDay();
-        var acution = this.collection.get(1);
-        if (curDay - acution.day >= 1) return "True" 
+        if (curDay - this.start >= this.auctiondays) {
+            return "True";
+        }
+        return curDay; 
     }
 };
 

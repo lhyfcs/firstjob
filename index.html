@@ -50,7 +50,8 @@
             visible: false,
             highest: 0,
             auctionText: "还没人中标哦！！！",
-            masterAddress: "n1fSVE86D57T9RFYZzv8BTHr5r5ZCoZPeBu", // test net
+            //masterAddress: "n1i19Tn28Jc4C2gBLCrJQjLpfxmFefpv6oo", // test net
+            masterAddress: "n1ecPkRKphq5qboaxcJMo4ky1JDTtHemmyz",
             columns: [
                     {
                         title: '支付地址',
@@ -74,7 +75,7 @@
         mounted: function(){
             if(this.walletCheck()){
                 this.refreshData();
-                setInterval(this.timeCheck, 10 * 1000);
+                setInterval(this.timeCheck, 120 * 1000);
             }
         },
         methods: {
@@ -101,6 +102,9 @@
                         }
                     } 
                 });
+            },
+            refund: function(){
+
             },
             acution:function(){
                 if (typeof(webExtensionWallet) === "undefined") {
@@ -156,6 +160,12 @@
                     listener: function(resp){ // inittable
                         var result = resp.result;
                         self.highest = result;
+                    }   
+                });
+                callFunction="getAuctionContext"
+                nebPay.simulateCall(to, value, callFunction, callArgs, {   
+                    listener: function(resp){ // inittable
+                        self.auctionText = JSON.parse(resp.result) || self.auctionText;
                     }   
                 });
             }
